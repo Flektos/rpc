@@ -50,6 +50,40 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	FILE *fp = fopen(argv[1], "w");
+
+	char message[100];
+	sprintf(message, "[PARENT] -> <%d>\n", getpid());
+	fwrite(message, sizeof(char), strlen(message), fp);
+	fclose(fp);
+
+	for(int i=0; i<processCount; i++)
+	{
+
+
+		pid_t pid = fork();
+
+		if(pid < 0)
+		{
+			fprintf(stderr, "%s", strerror(errno));
+			return -1;
+		}
+			
+		//Child
+		if(pid == 0)
+		{
+			FILE *fp = fopen(argv[1], "a+");
+			char message[100];
+			sprintf(message, "[CHILD] -> <%d>\n", getpid());
+			fwrite(message, sizeof(char), strlen(message), fp);
+			fclose(fp);
+			break;
+		}
+		
+		//Parent
+		if(pid > 0) {}
+	}
+
 	free(fileName);	
 	return 0;
 }
