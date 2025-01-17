@@ -1,6 +1,1 @@
-[PARENT] -> <6182>
-[CHILD] -> <6183>
-[CHILD] -> <6184>
-[CHILD] -> <6186>
-[CHILD] -> <6187>
-[CHILD] -> <6185>
+<66533> -> <Hello child, I am your father and i call you: <childName>>

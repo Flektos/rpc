@@ -17,7 +17,7 @@ bool fileExists(const char* fileName)
 	return true;
 }
 
-//Create Cn process with fork
+typedef int pipefd[2];
 
 int main(int argc, char* argv[])
 {
@@ -57,6 +57,13 @@ int main(int argc, char* argv[])
 	fwrite(message, sizeof(char), strlen(message), fp);
 	fclose(fp);
 
+	pipefd* childPipes = malloc(sizeof(pipefd) * processCount);
+
+	for(int i=0; i<processCount; i++)
+	{
+	    pipe(childPipes[i]);
+	}
+
 	for(int i=0; i<processCount; i++)
 	{
 
@@ -72,18 +79,39 @@ int main(int argc, char* argv[])
 		//Child
 		if(pid == 0)
 		{
+			close(childPipes[i][1]);
+
 			FILE *fp = fopen(argv[1], "a+");
-			char message[100];
-			sprintf(message, "[CHILD] -> <%d>\n", getpid());
+			char message[200];
+			char parent[100];
+			read(childPipes[i][0], parent, sizeof(parent));
+			sprintf(message, "<%d> -> <%s>\n", getpid(), parent);
+
 			fwrite(message, sizeof(char), strlen(message), fp);
 			fclose(fp);
+			close(childPipes[i][0]);
 			break;
 		}
-		
-		//Parent
-		if(pid > 0) {}
 	}
 
+
+	for(int i=0; i<processCount; i++)
+	{
+		close(childPipes[i][0]);
+
+		char message[] = "Hello child, I am your father and i call you: <childName>";
+
+		write(childPipes[i][1], message, sizeof(message));
+
+		close(childPipes[i][1]);
+	}
+
+	for(int i=0; i<processCount; i++)
+	{
+	    wait(NULL);
+ 	}
+
+	free(childPipes);
 	free(fileName);	
 	return 0;
 }
