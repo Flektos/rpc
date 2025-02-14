@@ -33,6 +33,10 @@ void handle_signal(int sig)
 	{
         waitpid(child[i].pid, NULL, 0);
     }
+	
+	if(fileName) free(fileName);
+	if(child) free(child);
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -119,7 +123,7 @@ void parentCommunication(child_t* child, int processCount)
     char buffer[64];
     int counter = 0;
 
-    while (1) 
+    while (true) 
 	{
         FD_ZERO(&readFD);
         FD_ZERO(&writeFD);
@@ -141,10 +145,10 @@ void parentCommunication(child_t* child, int processCount)
 		{
             if(FD_ISSET(child[i].childToParent[0], &readFD)) 
 			{
-				int bytes_read = read(child[i].childToParent[0], buffer, sizeof(buffer));
-                if(bytes_read > 0) 
+				int rb = read(child[i].childToParent[0], buffer, sizeof(buffer));
+                if(rb > 0) 
 				{
-                    buffer[bytes_read] = '\0';
+                    buffer[rb] = '\0';
 					child[i].working = false;
                 }else 
 				{
@@ -162,8 +166,6 @@ void parentCommunication(child_t* child, int processCount)
 		sleep(1);
     }
 }
-
-
 
 int main(int argc, char* argv[])
 {
@@ -217,5 +219,6 @@ int main(int argc, char* argv[])
  	}
 
 	free(fileName);	
+	free(child);
 	return 0;
 }

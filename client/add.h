@@ -15,8 +15,7 @@ extern "C" {
 
 
 struct numbers {
-	int a;
-	int b;
+	int nums[10];
 };
 typedef struct numbers numbers;
 

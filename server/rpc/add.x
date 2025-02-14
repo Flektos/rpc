@@ -1,7 +1,6 @@
 struct numbers{
-	int a;
-	int b;
-};
+	int nums[10];
+}
 
 program ADD_PROG{
 	version ADD_VERS{

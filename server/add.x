@@ -1,6 +1,5 @@
 struct numbers{
-	int a;
-	int b;
+	int nums[10];
 };
 
 program ADD_PROG{
@@ -8,3 +7,4 @@ program ADD_PROG{
 		int add(numbers)=1;
 	}=1;
 }=0x23459911;
+

@@ -10,9 +10,46 @@ xdr_numbers (XDR *xdrs, numbers *objp)
 {
 	register int32_t *buf;
 
-	 if (!xdr_int (xdrs, &objp->a))
-		 return FALSE;
-	 if (!xdr_int (xdrs, &objp->b))
+	int i;
+
+	if (xdrs->x_op == XDR_ENCODE) {
+		buf = XDR_INLINE (xdrs, ( 10 ) * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
+			 if (!xdr_vector (xdrs, (char *)objp->nums, 10,
+				sizeof (int), (xdrproc_t) xdr_int))
+				 return FALSE;
+		} else {
+			{
+				register int *genp;
+
+				for (i = 0, genp = objp->nums;
+					i < 10; ++i) {
+					IXDR_PUT_LONG(buf, *genp++);
+				}
+			}
+		}
+		return TRUE;
+	} else if (xdrs->x_op == XDR_DECODE) {
+		buf = XDR_INLINE (xdrs, ( 10 ) * BYTES_PER_XDR_UNIT);
+		if (buf == NULL) {
+			 if (!xdr_vector (xdrs, (char *)objp->nums, 10,
+				sizeof (int), (xdrproc_t) xdr_int))
+				 return FALSE;
+		} else {
+			{
+				register int *genp;
+
+				for (i = 0, genp = objp->nums;
+					i < 10; ++i) {
+					*genp++ = IXDR_GET_LONG(buf);
+				}
+			}
+		}
+	 return TRUE;
+	}
+
+	 if (!xdr_vector (xdrs, (char *)objp->nums, 10,
+		sizeof (int), (xdrproc_t) xdr_int))
 		 return FALSE;
 	return TRUE;
 }

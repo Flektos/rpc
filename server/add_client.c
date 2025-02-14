@@ -8,7 +8,7 @@
 
 
 void
-add_prog_1(char *host, int x, int y)
+add_prog_1(char *host)
 {
 	CLIENT *clnt;
 	int  *result_1;
@@ -21,15 +21,10 @@ add_prog_1(char *host, int x, int y)
 		exit (1);
 	}
 #endif	/* DEBUG */
-	add_1_arg.a=x;
-	add_1_arg.b=y;
+
 	result_1 = add_1(&add_1_arg, clnt);
 	if (result_1 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
-	}
-	else
-	{
-		printf("Result: %d\n", *result_1);
 	}
 #ifndef	DEBUG
 	clnt_destroy (clnt);
@@ -43,10 +38,10 @@ main (int argc, char *argv[])
 	char *host;
 
 	if (argc < 2) {
-		printf ("usage: %s server_host number number\n", argv[0]);
+		printf ("usage: %s server_host\n", argv[0]);
 		exit (1);
 	}
 	host = argv[1];
-	add_prog_1 (host, atoi(argv[2]), atoi(argv[3]));
+	add_prog_1 (host);
 exit (0);
 }

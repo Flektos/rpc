@@ -8,7 +8,7 @@
 
 
 void
-add_prog_1(char *host, int x, int y)
+add_prog_1(char *host, int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, int p9, int p10)
 {
 	CLIENT *clnt;
 	int  *result_1;
@@ -21,15 +21,23 @@ add_prog_1(char *host, int x, int y)
 		exit (1);
 	}
 #endif	/* DEBUG */
-	add_1_arg.a=x;
-	add_1_arg.b=y;
+	add_1_arg.nums[0] = p1;
+	add_1_arg.nums[1] = p2;
+	add_1_arg.nums[2] = p3;
+	add_1_arg.nums[3] = p4;
+	add_1_arg.nums[4] = p5;
+	add_1_arg.nums[5] = p6;
+	add_1_arg.nums[6] = p7;
+	add_1_arg.nums[7] = p8;
+	add_1_arg.nums[8] = p9;
+	add_1_arg.nums[9] = p10;
 	result_1 = add_1(&add_1_arg, clnt);
 	if (result_1 == (int *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
 	else
 	{
-		printf("Result: %d\n", *result_1);
+		printf("Your result: %d\n", *result_1);
 	}
 #ifndef	DEBUG
 	clnt_destroy (clnt);
@@ -42,11 +50,11 @@ main (int argc, char *argv[])
 {
 	char *host;
 
-	if (argc < 2) {
-		printf ("usage: %s server_host number number\n", argv[0]);
+	if (argc < 12) {
+		printf ("usage: %s server_host and 10 numbers seperated by space\n", argv[0]);
 		exit (1);
 	}
 	host = argv[1];
-	add_prog_1 (host, atoi(argv[2]), atoi(argv[3]));
+	add_prog_1 (host, atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), atoi(argv[6]), atoi(argv[7]), atoi(argv[8]), atoi(argv[9]), atoi(argv[10]), atoi(argv[11]));
 exit (0);
 }
