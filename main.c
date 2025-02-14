@@ -8,8 +8,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-volatile sig_atomic_t terminate_flag = 0;
-
 typedef int pipefd[2];
 
 typedef struct 
@@ -20,21 +18,22 @@ typedef struct
 	bool working;
 } child_t;
 
-void terminate_children(child_t* child, int n) 
+child_t* child = NULL;
+char *fileName = NULL;
+int processCount = 0;
+
+void handle_signal(int sig) 
 {
-    for(int i=0; i<n; i++) 
+    for(int i=0; i<processCount; i++) 
 	{
         kill(child[i].pid, SIGTERM);
     }
 
-    for(int i=0; i<n; i++) 
+    for(int i=0; i<processCount; i++) 
 	{
         waitpid(child[i].pid, NULL, 0);
     }
-}
-
-void handle_signal(int sig) {
-	terminate_flag = 1;
+	exit(EXIT_SUCCESS);
 }
 
 bool fileExists(const char* fileName)
@@ -100,37 +99,6 @@ int createChildAndPipes(child_t* child, int processCount, char* filePath)
 	}
 }
 
-/*void writeToChild(child_t* child, int processCount)
-{
-	for(int i=0; i<processCount; i++)
-	{
-		char message[] = "Hello child, I am your father and i call you: <childName>";
-		write(child[i].parentToChild[1], message, sizeof(message));
-	}
-
-	fd_set readFD;
-	int maxFD = 0;
-	for(int i=0; i<n; i++)
-	{
-		if(child[i].childToParent[1] > maxFD)
-		{
-			maxFD = child[i].childToParent[1]; 
-		}
-	}
-
-
-}*/
-
-void readFromChild(child_t* child, int processCount)
-{
-	for(int i=0; i<processCount; i++)
-	{
-		char message[64];
-		read(child[i].childToParent[0], message, sizeof(message));
-		printf("%s\n", message);
-	}
-}
-
 void parentCommunication(child_t* child, int processCount)
 {
 	fd_set readFD, writeFD;
@@ -165,7 +133,7 @@ void parentCommunication(child_t* child, int processCount)
         int ready = select(maxFD + 1, &readFD, &writeFD, NULL, NULL);
         if(ready < 0) 
 		{
-            perror("select");
+			fprintf(stderr, "Select erro\n");
             break;
         }
 
@@ -173,7 +141,7 @@ void parentCommunication(child_t* child, int processCount)
 		{
             if(FD_ISSET(child[i].childToParent[0], &readFD)) 
 			{
-                int bytes_read = read(child[i].childToParent[0], buffer, sizeof(buffer));
+				int bytes_read = read(child[i].childToParent[0], buffer, sizeof(buffer));
                 if(bytes_read > 0) 
 				{
                     buffer[bytes_read] = '\0';
@@ -187,18 +155,11 @@ void parentCommunication(child_t* child, int processCount)
             if(FD_ISSET(child[i].parentToChild[1], &writeFD))
 			{
 				child[i].working = true;
-				char message[] = "Hello child, I am your father and i call you: <childName>";
+				char message[] = "Hello child, I am your father and i call you";
                 write(child[i].parentToChild[1], message, sizeof(message));
             }
         }
-
-		if(terminate_flag)
-		{
-			terminate_children(child, processCount);
-			exit(EXIT_SUCCESS);
-		}
-
-        sleep(1);
+		sleep(1);
     }
 }
 
@@ -211,9 +172,6 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Usage: ./rpc [file name] [process count]");
 		return -1;
 	}
-
-	char *fileName = NULL;
-	int processCount = 0;
 
 	if(fileExists(argv[1]))
 	{
@@ -244,7 +202,7 @@ int main(int argc, char* argv[])
 	fwrite(message, sizeof(char), strlen(message), fp);
 	fclose(fp);
 
-	child_t* child = (child_t*)malloc(sizeof(child_t) * processCount);
+	child = (child_t*)malloc(sizeof(child_t) * processCount);
 
 	if(createChildAndPipes(child, processCount, fileName) == -1)
 	{
@@ -252,8 +210,6 @@ int main(int argc, char* argv[])
 	}
 
 	parentCommunication(child, processCount);
-	//writeToChild(child, processCount);
-	//readFromChild(child, processCount);	
 
 	for(int i=0; i<processCount; i++)
 	{
