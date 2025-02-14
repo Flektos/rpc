@@ -24,6 +24,23 @@ typedef struct
 child_t child[PROCESS_COUNT] = {0};
 int finalAnswer = 0;
 
+void handle_signal(int sig) 
+{
+	printf("Shuting down...\n");
+
+    for(int i=0; i<PROCESS_COUNT; i++) 
+	{
+        kill(child[i].pid, SIGTERM);
+    }
+
+    for(int i=0; i<PROCESS_COUNT; i++) 
+	{
+        waitpid(child[i].pid, NULL, 0);
+    }
+
+	exit(EXIT_SUCCESS);
+}
+
 int createChildAndPipes(child_t child[PROCESS_COUNT])
 {
 	for(int i=0; i<PROCESS_COUNT; i++)
@@ -137,6 +154,7 @@ void parentCommunication(child_t child[PROCESS_COUNT], numbers *argp)
     }
 }
 
+
 int *
 add_1_svc(numbers *argp, struct svc_req *rqstp)
 {
@@ -146,9 +164,17 @@ add_1_svc(numbers *argp, struct svc_req *rqstp)
 
 	parentCommunication(child, argp);
 
+	signal(SIGINT, handle_signal);
+
 	result = finalAnswer;
 
 	finalAnswer = 0;
+
+	for(int i=0; i<PROCESS_COUNT; i++)
+	{
+		close(child[i].parentToChild[1]);
+		close(child[i].childToParent[0]);
+	}
 
 	return &result;
 }
