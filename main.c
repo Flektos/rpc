@@ -24,6 +24,12 @@ int processCount = 0;
 
 void handle_signal(int sig) 
 {
+	for(int i=0; i<PROCESS_COUNT; i++)
+	{
+		close(child[i].parentToChild[1]);
+		close(child[i].childToParent[0]);
+	}
+
     for(int i=0; i<processCount; i++) 
 	{
         kill(child[i].pid, SIGTERM);

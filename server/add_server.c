@@ -8,84 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
-#define PROCESS_COUNT 10
-
-typedef int pipefd[2];
-
-typedef struct 
-{
-	pipefd parentToChild;
-	pipefd childToParent;
-	pid_t pid;
-	bool working;
-} child_t;
-
-child_t child[PROCESS_COUNT] = {0};
-int finalAnswer = 0;
-
-void handle_signal(int sig) 
-{
-	printf("Shuting down...\n");
-
-    for(int i=0; i<PROCESS_COUNT; i++) 
-	{
-        kill(child[i].pid, SIGTERM);
-    }
-
-    for(int i=0; i<PROCESS_COUNT; i++) 
-	{
-        waitpid(child[i].pid, NULL, 0);
-    }
-
-	exit(EXIT_SUCCESS);
-}
-
-int createChildAndPipes(child_t child[PROCESS_COUNT])
-{
-	for(int i=0; i<PROCESS_COUNT; i++)
-	{
-		if(pipe(child[i].childToParent) == -1)
-		{
-			fprintf(stderr, "%s", strerror(errno));
-			return -1;
-		}
-		if(pipe(child[i].parentToChild) == -1)
-		{
-			fprintf(stderr, "%s", strerror(errno));
-			return -1;
-		}
-
-		child[i].pid = fork();
-
-		if(child[i].pid == -1)
-		{
-			fprintf(stderr, "%s", strerror(errno));
-			return -1;
-		}else if(child[i].pid == 0)
-		{
-			int input;
-			int output;
-
-			while(true)
-			{
-				int b = read(child[i].parentToChild[0], &input, sizeof(input));
-				if(b <= 0) continue;
-
-				output = input * 2;
-				
-				write(child[i].childToParent[1], &output, sizeof(output));
-			}
-						
-			close(child[i].parentToChild[0]);
-			close(child[i].childToParent[1]);
-
-			exit(EXIT_SUCCESS);
-		}
-
-		child[i].working = false;
-	}
-}
+#include "data.h"
 
 void parentCommunication(child_t child[PROCESS_COUNT], numbers *argp)
 {
@@ -160,21 +83,11 @@ add_1_svc(numbers *argp, struct svc_req *rqstp)
 {
 	static int  result;
 
-	createChildAndPipes(child);
-
 	parentCommunication(child, argp);
-
-	signal(SIGINT, handle_signal);
 
 	result = finalAnswer;
 
 	finalAnswer = 0;
-
-	for(int i=0; i<PROCESS_COUNT; i++)
-	{
-		close(child[i].parentToChild[1]);
-		close(child[i].childToParent[0]);
-	}
 
 	return &result;
 }
